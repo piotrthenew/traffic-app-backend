@@ -1,14 +1,14 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
+# from sqlalchemy.orm import Session  # Tymczasowo wyłączone
 from datetime import datetime
 from typing import List
 from pydantic import BaseModel
-import database
-from database import SessionLocal, engine, User, Report, create_tables
+# import database  # Tymczasowo wyłączone
+# from database import SessionLocal, engine, User, Report, create_tables  # Tymczasowo wyłączone
 
 # Tworzymy tabele w bazie danych
-create_tables()
+# create_tables()  # Tymczasowo wyłączone
 
 app = FastAPI(title="TrafficApp API", version="1.0.0")
 
@@ -29,61 +29,43 @@ class ReportCreate(BaseModel):
     lng: float = None
     report_type: str = "other"
 
-# Dependency dla bazy danych
+# Dependency dla bazy danych - TYMCZASOWO PROSTE
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    # Tymczasowo zwracamy None zamiast sesji bazy danych
+    yield None
 
 @app.get("/")
 def read_root():
     return {
         "status": "OK", 
-        "message": "🚀 TrafficApp API z bazą danych działa!",
+        "message": "🚀 TrafficApp API (tryb tymczasowy - baza wyłączona)",
         "timestamp": datetime.now().isoformat(),
-        "author": "Piotr Śledziewski"
+        "author": "Piotr Śledziewski",
+        "note": "Baza danych tymczasowo wyłączona z powodu kompatybilności Python 3.13"
     }
 
 @app.get("/reports")
-def get_reports(db: Session = Depends(get_db)):
-    reports = db.query(Report).all()
-    return {"reports": reports}
+def get_reports():  # Usunięto: db: Session = Depends(get_db)
+    return {"reports": [], "message": "Tryb tymczasowy - baza wyłączona"}
 
 @app.post("/reports")
-def create_report(report_data: ReportCreate, db: Session = Depends(get_db)):
-    # Tworzymy nowe zgłoszenie
-    new_report = Report(
-        title=report_data.title,
-        description=report_data.description,
-        location={"lat": report_data.lat, "lng": report_data.lng} if report_data.lat and report_data.lng else None,
-        report_type=report_data.report_type
-    )
-    
-    db.add(new_report)
-    db.commit()
-    db.refresh(new_report)
-    
+def create_report(report_data: ReportCreate):  # Usunięto: db: Session = Depends(get_db)
+    # Tymczasowo nie zapisujemy do bazy
     return {
-        "message": "Zgłoszenie dodane!",
+        "message": "Zgłoszenie dodane (tryb testowy - baza tymczasowo wyłączona)",
         "report": {
-            "id": new_report.id,
-            "title": new_report.title,
-            "type": new_report.report_type
+            "id": 999,  # Tymczasowy ID
+            "title": report_data.title,
+            "type": report_data.report_type,
+            "note": "Dane nie są zapisywane w bazie w trybie tymczasowym"
         }
     }
 
 # Endpoint do sprawdzenia połączenia z bazą
 @app.get("/test-db")
-def test_database(db: Session = Depends(get_db)):
-    try:
-        # PROSTSZY TEST: próbujemy pobrać listę zgłoszeń
-        reports_count = db.query(Report).count()
-        return {
-            "database_status": "OK", 
-            "message": "Połączenie z bazą działa!",
-            "reports_count": reports_count
-        }
-    except Exception as e:
-        return {"database_status": "ERROR", "message": str(e)}
+def test_database():  # Usunięto: db: Session = Depends(get_db)
+    return {
+        "database_status": "TEMPORARILY_DISABLED", 
+        "message": "Baza danych tymczasowo wyłączona z powodu kompatybilności z Python 3.13",
+        "action_required": "Należy zmienić wersję Pythona na 3.11 w ustawieniach Render"
+    }
