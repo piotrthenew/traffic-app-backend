@@ -20,10 +20,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
-# ========== CORS ==========
+# ========== CORS - KONFIGURACJA (NAPRAWIONA) ==========
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://traffic-app-frontend-rojg.vercel.app",  # frontend na Vercel
+        "http://localhost:3000",                         # frontend lokalny
+        "https://traffic-app-frontend-rojg.vercel.app",  # ewentualna druga wersja
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -47,7 +51,6 @@ def create_access_token(data: dict) -> str:
 # ========== MODELE DANYCH ==========
 
 class RegisterRequest(BaseModel):
-    """Model danych rejestracji – przyjmuje JSON z body"""
     email: str
     password: str
     username: Optional[str] = None
@@ -63,11 +66,10 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# ========== ENDPOINTY AUTORYZACJI (z /api/) ==========
+# ========== ENDPOINTY AUTORYZACJI ==========
 
 @app.post("/api/register")
 def register(user_data: RegisterRequest):
-    """Rejestracja nowego użytkownika – dane z body (JSON)"""
     hashed = get_password_hash(user_data.password)
     return {
         "message": "użytkownik zarejestrowany",
@@ -80,7 +82,6 @@ def register(user_data: RegisterRequest):
 
 @app.post("/api/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Logowanie - zwraca token JWT"""
     access_token = create_access_token(data={"sub": form_data.username})
     return {
         "access_token": access_token,
