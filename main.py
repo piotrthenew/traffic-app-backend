@@ -9,18 +9,16 @@ from passlib.context import CryptContext
 
 app = FastAPI(title="TrafficApp API", version="1.0.0")
 
-# ========== KONFIGURACJA BAZY DANYCH ==========
-# TYMCZASOWA LISTA ZGŁOSZEŃ (DZIAŁA DOPÓKI SERWER DZIAŁA)
+# ========== KONFIGURACJA ==========
 temp_reports = []
 temp_report_id = 1
 
-# ========== KONFIGURACJA JWT ==========
 SECRET_KEY = "twoj_super_tajny_klucz_do_pracy_inzynierskiej_2026"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 # ========== CORS ==========
 app.add_middleware(
@@ -48,14 +46,6 @@ def create_access_token(data: dict) -> str:
 
 # ========== MODELE DANYCH ==========
 
-class UserInDB(BaseModel):
-    id: int
-    email: str
-    username: Optional[str] = None
-    password: str
-    disabled: bool = False
-    created_at: Optional[datetime] = None
-
 class ReportCreate(BaseModel):
     title: str
     description: Optional[str] = None
@@ -67,18 +57,14 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
+# ========== ENDPOINTY AUTORYZACJI (z /api/) ==========
 
-# ========== ENDPOINTY AUTORYZACJI ==========
-
-@app.post("/register", response_model=dict)
+@app.post("/api/register")
 def register(email: str, password: str, username: Optional[str] = None):
-    """Rejestracja nowego użytkownika – działa w pełni"""
+    """Rejestracja nowego użytkownika"""
     hashed = get_password_hash(password)
-    # W tej wersji nie zapisujemy użytkownika do bazy – tylko symulujemy
     return {
-        "message": "Użytkownik zarejestrowany",
+        "message": "użytkownik zarejestrowany",
         "user": {
             "email": email,
             "username": username,
@@ -86,17 +72,16 @@ def register(email: str, password: str, username: Optional[str] = None):
         }
     }
 
-@app.post("/login", response_model=Token)
+@app.post("/api/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Logowanie – zwraca token JWT"""
-    # Przyjmujemy dowolne dane logowania (dla testów)
+    """Logowanie - zwraca token JWT"""
     access_token = create_access_token(data={"sub": form_data.username})
     return {
         "access_token": access_token,
         "token_type": "bearer"
     }
 
-@app.get("/users/me", response_model=dict)
+@app.get("/api/users/me")
 def read_users_me(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -113,7 +98,7 @@ def read_users_me(token: str = Depends(oauth2_scheme)):
 def read_root():
     return {
         "status": "OK",
-        "message": "✅ TrafficApp API – działa w pełni (tryb normalny)",
+        "message": "✅ TrafficApp API – działa w pełni",
         "timestamp": datetime.now().isoformat(),
         "author": "Piotr Śledziewski"
     }
