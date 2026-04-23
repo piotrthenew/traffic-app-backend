@@ -46,6 +46,12 @@ def create_access_token(data: dict) -> str:
 
 # ========== MODELE DANYCH ==========
 
+class RegisterRequest(BaseModel):
+    """Model danych rejestracji – przyjmuje JSON z body"""
+    email: str
+    password: str
+    username: Optional[str] = None
+
 class ReportCreate(BaseModel):
     title: str
     description: Optional[str] = None
@@ -60,14 +66,14 @@ class Token(BaseModel):
 # ========== ENDPOINTY AUTORYZACJI (z /api/) ==========
 
 @app.post("/api/register")
-def register(email: str, password: str, username: Optional[str] = None):
-    """Rejestracja nowego użytkownika"""
-    hashed = get_password_hash(password)
+def register(user_data: RegisterRequest):
+    """Rejestracja nowego użytkownika – dane z body (JSON)"""
+    hashed = get_password_hash(user_data.password)
     return {
         "message": "użytkownik zarejestrowany",
         "user": {
-            "email": email,
-            "username": username,
+            "email": user_data.email,
+            "username": user_data.username,
             "hashed_password": hashed[:20] + "..."
         }
     }
